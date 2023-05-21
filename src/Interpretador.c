@@ -100,43 +100,50 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
     int duracao = 0; // Variável para armazenar a duração do processo
     char policy; // Variável para armazenar a política do processo (I: REAL TIME, A: ROUND ROBIN)
     char processName[10]; // Nome do processo
+while (fscanf(fp, "%*s <%[^>]> %c=<%d> D=<%d>", processName, &policy, &inicio, &duracao) != EOF)
+{
+    if (policy == 'I')
+    { // Processo REAL TIME
+        if (isOK(lstProcess, *i, inicio, duracao))
+        {
+            Process realTimeProcess;
+            strcpy(realTimeProcess.name, processName);
+            realTimeProcess.index = *i;
+            realTimeProcess.init = inicio;
+            realTimeProcess.duration = duracao;
+            realTimeProcess.policy = REAL_TIME;
+            realTimeProcess.started = FALSE;
 
-    while (fscanf(fp, "%*s <%[^>]> %c=<%d> D=<%d>", processName, &policy, &inicio, &duracao) != EOF)
-    {
-        if (policy == 'I')
-        { // Processo REAL TIME
-            if (isOK(lstProcess, *i, inicio, duracao))
-            {
-                strcpy(lstProcess[*i].name, processName);
-                lstProcess[*i].index = *i;
-                lstProcess[*i].init = inicio;
-                lstProcess[*i].duration = duracao;
-                lstProcess[*i].policy = REAL_TIME;
-                lstProcess[*i].started = FALSE;
+            lstProcess[*i] = realTimeProcess;
 
-                (*i)++;
-            }
-            else
-            {
-                printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
-            }
-
-            policy = 'A';
-            inicio = -1;
-            duracao = 1;
-        }
-        else
-        { // Processo ROUND ROBIN
-            strcpy(lstProcess[*i].name, processName);
-            lstProcess[*i].index = *i;
-            lstProcess[*i].init = -1;
-            lstProcess[*i].duration = 1;
-            lstProcess[*i].policy = ROUND_ROBIN;
-            lstProcess[*i].started = FALSE;
             (*i)++;
         }
-        sleep(1);
+        else
+        {
+            printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
+        }
+
+        policy = 'A';
+        inicio = -1;
+        duracao = 1;
     }
+    else
+    { // Processo ROUND ROBIN
+        Process roundRobinProcess;
+        strcpy(roundRobinProcess.name, processName);
+        roundRobinProcess.index = *i;
+        roundRobinProcess.init = -1;
+        roundRobinProcess.duration = 1;
+        roundRobinProcess.policy = ROUND_ROBIN;
+        roundRobinProcess.started = FALSE;
+
+        lstProcess[*i] = roundRobinProcess;
+
+        (*i)++;
+    }
+    sleep(1);
+}
+
 
     fclose(fp); // Fecha o arquivo
 }

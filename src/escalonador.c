@@ -103,9 +103,7 @@ void handleSignal(int sig) {
     Caso ocorra algum erro na alocação de memória, a função exibe uma mensagem de erro e encerra o programa.
 */
 char* concatenateStrings(const char* str1, const char* str2) {
-    size_t str1Size = strlen(str1);
-    size_t str2Size = strlen(str2);
-    size_t totalSize = str1Size + str2Size + 1;
+    size_t totalSize = strlen(str1) + strlen(str2) + 1;
 
     char* result = (char*)malloc(totalSize);
 
@@ -114,8 +112,8 @@ char* concatenateStrings(const char* str1, const char* str2) {
         exit(1);
     }
 
-    strcpy(result, str1);
-    strcat(result, str2);
+    memcpy(result, str1, strlen(str1));
+    memcpy(result + strlen(str1), str2, strlen(str2) + 1);
     return result;
 }
 
