@@ -14,11 +14,9 @@ int main(int argc, char* argv[]){
     pid_t* pid = shmat(shmid_pid, 0, 0);
 
     *pid = getpid();
-
-    printf("Programa 1 - pid: %d\n", *pid);
     
     for(EVER){
-        printf("Executando %s...\n",argv[0]);
+        printf("Executando %s\n",argv[0]);
         sleep(1);
     }
 

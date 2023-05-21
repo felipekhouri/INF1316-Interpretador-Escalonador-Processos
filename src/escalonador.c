@@ -133,7 +133,7 @@ void executeProcess(Process p){
     
     strcat(path, p.name);
     if(fork() == 0){
-        printf("Iniciando %s\n", p.name);
+        printf("Iniciando %s | PID:\n", p.name,p.pid);
         execvp(path, argv);
     } 
     return;
