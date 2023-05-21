@@ -76,54 +76,66 @@ void displayQueue(Queue *q)
     printf("FINAL DA FILA\n*******************\n");
 }
 
-void swap(Process *a, Process *b)
+Node* merge(Node* left, Node* right)
 {
-    Process temp = *a;
-    *a = *b;
-    *b = temp;
+    if (left == NULL)
+        return right;
+    if (right == NULL)
+        return left;
+
+    Node* result = NULL;
+
+    if (left->process.init <= right->process.init) {
+        result = left;
+        result->next = merge(left->next, right);
+    }
+    else {
+        result = right;
+        result->next = merge(left, right->next);
+    }
+
+    return result;
 }
 
-Node *partition(Node *low, Node *high)
+void split(Node* source, Node** frontRef, Node** backRef)
 {
-    Process pivot = high->process;
-    Node *i = low->prev;
+    Node* slow = source;
+    Node* fast = source->next;
 
-    for (Node *j = low; j != high; j = j->next)
-    {
-        if (j->process.init < pivot.init)
-        {
-            i = (i == NULL) ? low : i->next;
-            swap(&(i->process), &(j->process));
+    while (fast != NULL) {
+        fast = fast->next;
+        if (fast != NULL) {
+            slow = slow->next;
+            fast = fast->next;
         }
     }
 
-    i = (i == NULL) ? low : i->next;
-    swap(&(i->process), &(high->process));
-    return i;
+    *frontRef = source;
+    *backRef = slow->next;
+    slow->next = NULL;
 }
 
-void quickSort(Node *low, Node *high)
+void mergeSort(Node** headRef)
 {
-    if (high != NULL && low != high && low != high->next)
-    {
-        Node *pivot = partition(low, high->prev);
-        quickSort(low, pivot->prev);
-        quickSort(pivot->next, high);
-    }
+    Node* head = *headRef;
+    Node* a;
+    Node* b;
+
+    if (head == NULL || head->next == NULL)
+        return;
+
+    split(head, &a, &b);
+
+    mergeSort(&a);
+    mergeSort(&b);
+
+    *headRef = merge(a, b);
 }
 
-void queueSort(Queue *q)
+void queueSort(Queue* q)
 {
     if (isEmpty(q) || q->front->next == NULL)
-    {
         return;
-    }
 
-    Node *lastNode = q->front;
-    while (lastNode->next != NULL)
-    {
-        lastNode = lastNode->next;
-    }
-
-    quickSort(q->front, lastNode);
+    mergeSort(&q->front);
 }
