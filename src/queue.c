@@ -76,6 +76,42 @@ void displayQueue(Queue *q)
     printf("FINAL DA FILA\n*******************\n");
 }
 
+void swap(Process *a, Process *b)
+{
+    Process temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+Node *partition(Node *low, Node *high)
+{
+    Process pivot = high->process;
+    Node *i = low->prev;
+
+    for (Node *j = low; j != high; j = j->next)
+    {
+        if (j->process.init < pivot.init)
+        {
+            i = (i == NULL) ? low : i->next;
+            swap(&(i->process), &(j->process));
+        }
+    }
+
+    i = (i == NULL) ? low : i->next;
+    swap(&(i->process), &(high->process));
+    return i;
+}
+
+void quickSort(Node *low, Node *high)
+{
+    if (high != NULL && low != high && low != high->next)
+    {
+        Node *pivot = partition(low, high->prev);
+        quickSort(low, pivot->prev);
+        quickSort(pivot->next, high);
+    }
+}
+
 void queueSort(Queue *q)
 {
     if (isEmpty(q) || q->front->next == NULL)
@@ -83,25 +119,11 @@ void queueSort(Queue *q)
         return;
     }
 
-    Node *currNode = q->front;
-    int swapped;
-    Process temp;
-
-    do
+    Node *lastNode = q->front;
+    while (lastNode->next != NULL)
     {
-        swapped = 0;
-        currNode = q->front;
+        lastNode = lastNode->next;
+    }
 
-        while (currNode->next != NULL)
-        {
-            if (currNode->process.init > currNode->next->process.init)
-            {
-                temp = currNode->process;
-                currNode->process = currNode->next->process;
-                currNode->next->process = temp;
-                swapped = 1;
-            }
-            currNode = currNode->next;
-        }
-    } while (swapped);
+    quickSort(q->front, lastNode);
 }
