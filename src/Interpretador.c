@@ -10,25 +10,25 @@
 
 // Protótipo das funções
 
-int isOK(Process *lp, int tam, int inicio, int duracao);
-void readProcessesFromFile(const char* filename, Process* lstProcess, int* i);
-void executeChildProcess(FILE* fp, Process* lstProcess, int i);
+void readProcessesFromFile(const char* filename, Process* processCollection, int* i);
+int isProcessReady(Process *lp, int size, int beginning, int duration);
+void executeChildProcess(FILE* fp, Process* processCollection, int i);
 void executeParentProcess();
 
 int main(void)
 {
     int i = 0; // Índice do processo
     char filename[] = "exec.txt"; // Nome do arquivo de entrada
-    size_t segmento; // ID da memória compartilhada
-    Process *lstProcess; // Ponteiro para a lista de processos
+    size_t segmentIdentifier; // ID da memória compartilhada
+    Process *processCollection; // Ponteiro para a lista de processos
 
-    segmento = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
-    if (segmento == -1)
+    segmentIdentifier = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
+    if (segmentIdentifier == -1)
     {
         perror("Erro ao alocar memória compartilhada");
         exit(1);
     }
-    lstProcess = shmat(segmento, 0, 0);
+    processCollection = shmat(segmentIdentifier, 0, 0);
 
     FILE *fp = fopen(filename, "r"); // Abre o arquivo para leitura
 
@@ -41,7 +41,7 @@ int main(void)
     pid_t pid = fork();
     if (pid == 0)
     { // Processo filho
-        executeChildProcess(fp, lstProcess, i);
+        executeChildProcess(fp, processCollection, i);
     }
     else if (pid > 0)
     { // Processo pai
@@ -53,28 +53,28 @@ int main(void)
 }
 
 /*
-    A função "isOK" verifica se um novo processo pode ser executado no instante de início especificado.
+    A função "isProcessReady" verifica se um novo processo pode ser executado no instante de início especificado.
     Ela percorre a lista de processos já existentes e verifica se há conflito de tempo.
-    Se houver algum processo em execução no intervalo [inicio, inicio + duracao] ou se o tempo de execução ultrapassar 60 segundos,
+    Se houver algum processo em execução no intervalo [beginning, beginning + duration] ou se o tempo de execução ultrapassar 60 segundos,
     retorna FALSE, indicando que o processo não pode ser executado.
     Caso contrário, retorna TRUE, indicando que o processo pode ser executado.
 */
-int isOK(Process *lp, int tam, int inicio, int duracao)
+int isProcessReady(Process *lp, int size, int beginning, int duration)
 {
-    for (int i = 0; i < tam; i++)
+    for (int i = 0; i < size; i++)
     {
-        if ((inicio >= lp[i].init) && (inicio <= (lp[i].init + lp[i].duration)))
+        if ((beginning >= lp[i].I) && (beginning <= (lp[i].I + lp[i].D)))
         {
             return FALSE;
         }
 
-        if (((inicio + duracao) >= lp[i].init) && ((inicio + duracao) <= (lp[i].init + lp[i].duration)))
+        if (((beginning + duration) >= lp[i].I) && ((beginning + duration) <= (lp[i].I + lp[i].D)))
         {
             return FALSE;
         }
     }
 
-    if ((inicio + duracao) > 60)
+    if ((beginning + duration) > 60)
     {
         return FALSE;
     }
@@ -88,7 +88,7 @@ int isOK(Process *lp, int tam, int inicio, int duracao)
     Se o processo for do tipo REAL TIME, verifica se pode ser executado no instante de início especificado.
     Caso seja válido, adiciona o processo na lista de processos.
 */
-void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
+void readProcessesFromFile(const char* filename, Process* processCollection, int* i) {
     FILE* fp = fopen(filename, "r"); // Abre o arquivo para leitura
 
     if (!fp)
@@ -97,40 +97,40 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
         exit(1);
     }
 
-    int inicio = 0; // Variável para armazenar o instante de início do processo
-    int duracao = 0; // Variável para armazenar a duração do processo
-    char policy; // Variável para armazenar a política do processo (I: REAL TIME, A: ROUND ROBIN)
+    int beginning = 0; // Variável para armazenar o instante de início do processo
+    int duration = 0; // Variável para armazenar a duração do processo
+    char schedulingAlg; // Variável para armazenar a política do processo (I: REAL TIME, A: ROUND ROBIN)
     char processName[10]; // Nome do processo
     char line[100]; // Variável para armazenar cada linha do arquivo
 
     while (fgets(line, sizeof(line), fp) != NULL) {
-        if (sscanf(line, "Run %s I=%d D=%d", processName, &inicio, &duracao) == 3) {
+        if (sscanf(line, "Run %s I=%d D=%d", processName, &beginning, &duration) == 3) {
             // Se a linha corresponde ao padrão esperado (com informações de I e D),
-            // define policy como 'I'.
-            policy = 'T';
+            // define schedulingAlg como 'I'.
+            schedulingAlg = 'T';
         } else if (sscanf(line, "Run %s", processName) == 1) {
             // Se a linha corresponde ao padrão esperado (sem informações adicionais),
-            // define policy como 'A' e zera inicio e duracao.
-            inicio = 0;
-            duracao = 0;
+            // define schedulingAlg como 'A' e zera beginning e duration.
+            beginning = 0;
+            duration = 0;
         } else {
             // Se a linha não corresponde ao padrão esperado, pula para a próxima linha.
             continue;
         }
 
-        if (policy == 'T')
+        if (schedulingAlg == 'T')
         { // Processo REAL TIME
-            if (isOK(lstProcess, *i, inicio, duracao))
+            if (isProcessReady(processCollection, *i, beginning, duration))
             {
                 Process realTimeProcess;
-                strcpy(realTimeProcess.name, processName);
+                strcpy(realTimeProcess.filename, processName);
                 realTimeProcess.index = *i;
-                realTimeProcess.init = inicio;
-                realTimeProcess.duration = duracao;
-                realTimeProcess.policy = REAL_TIME;
+                realTimeProcess.I = beginning;
+                realTimeProcess.D = duration;
+                realTimeProcess.schedulingAlg = REAL_TIME;
                 realTimeProcess.started = FALSE;
 
-                lstProcess[*i] = realTimeProcess;
+                processCollection[*i] = realTimeProcess;
 
                 (*i)++;
             }
@@ -139,21 +139,21 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
                 printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
             }
 
-            policy = 'A';
-            inicio = -1;
-            duracao = 1;
+            schedulingAlg = 'A';
+            beginning = -1;
+            duration = 1;
         }
         else
         { // Processo ROUND ROBIN
             Process roundRobinProcess;
-            strcpy(roundRobinProcess.name, processName);
+            strcpy(roundRobinProcess.filename, processName);
             roundRobinProcess.index = *i;
-            roundRobinProcess.init = -1;
-            roundRobinProcess.duration = 1;
-            roundRobinProcess.policy = ROUND_ROBIN;
+            roundRobinProcess.I = -1;
+            roundRobinProcess.D = 1;
+            roundRobinProcess.schedulingAlg = ROUND_ROBIN;
             roundRobinProcess.started = FALSE;
 
-            lstProcess[*i] = roundRobinProcess;
+            processCollection[*i] = roundRobinProcess;
 
             (*i)++;
         }
@@ -168,8 +168,8 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
     A função "executeChildProcess" executa o código do processo filho.
     Ela lê os processos do arquivo, armazena na lista de processos e realiza as operações necessárias.
 */
-void executeChildProcess(FILE* fp, Process* lstProcess, int i) {
-    readProcessesFromFile("exec.txt", lstProcess, &i);
+void executeChildProcess(FILE* fp, Process* processCollection, int i) {
+    readProcessesFromFile("exec.txt", processCollection, &i);
 }
 
 /*
