@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "info.h"
+#include "data.h"
 
 void initQueue(Queue *q)
 {

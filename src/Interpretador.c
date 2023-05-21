@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <sys/types.h>
-#include "info.h"
+#include "data.h"
 
 // Protótipo da função
 int isOK(Process *lp, int tam, int inicio, int duracao);
