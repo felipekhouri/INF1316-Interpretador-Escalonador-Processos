@@ -146,31 +146,6 @@ void handleSignal(int sig) {
 
 
 /*
-    A função "concatenateStrings" recebe duas strings e retorna uma nova string
-    que é a concatenação das duas.
-    Ela aloca memória suficiente para armazenar a nova string e a concatena
-    usando as funções strcpy e strcat.
-    Caso ocorra algum erro na alocação de memória, a função exibe uma mensagem de erro e encerra o programa.
-*/
-char* concatenateStrings(const char* str1, const char* str2) {
-    size_t str1Size = strlen(str1);
-    size_t str2Size = strlen(str2);
-    size_t totalSize = str1Size + str2Size + 1;
-
-    char* result = (char*)malloc(totalSize);
-
-    if (result == NULL) {
-        perror("Erro ao alocar memória");
-        exit(1);
-    }
-
-    strcpy(result, str1);
-    strcat(result, str2);
-
-    return result;
-}
-
-/*
     A função "executeProcess" recebe um objeto Processo e executa o programa associado a ele.
     Ela cria um caminho completo para o programa, concatenando o diretório "./programas/" com o nome do programa.
     Em seguida, cria um array de argumentos vazio e verifica se é um novo processo (filho) usando a função fork().
@@ -179,10 +154,9 @@ char* concatenateStrings(const char* str1, const char* str2) {
     Após a execução do programa, a função retorna.
 */
 void executeProcess(Process p){
-    char *path = "./";
+    char path[20] = "./";
     char *argv[] = {p.name, NULL};
-    
-    path = concatenateStrings(path, p.name);
+    strcat(path, p.name);
     if(fork() == 0){
         printf("Iniciando %s\n", p.name);
         execvp(path, argv);
