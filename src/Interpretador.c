@@ -9,6 +9,7 @@
 #include "data.h"
 
 // Protótipo das funções
+
 int isOK(Process *lp, int tam, int inicio, int duracao);
 void readProcessesFromFile(const char* filename, Process* lstProcess, int* i);
 void executeChildProcess(FILE* fp, Process* lstProcess, int i);
@@ -100,53 +101,68 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
     int duracao = 0; // Variável para armazenar a duração do processo
     char policy; // Variável para armazenar a política do processo (I: REAL TIME, A: ROUND ROBIN)
     char processName[10]; // Nome do processo
-while (fscanf(fp, "%*s <%[^>]> %c=<%d> D=<%d>", processName, &policy, &inicio, &duracao) != EOF)
-{
-    if (policy == 'I')
-    { // Processo REAL TIME
-        if (isOK(lstProcess, *i, inicio, duracao))
-        {
-            Process realTimeProcess;
-            strcpy(realTimeProcess.name, processName);
-            realTimeProcess.index = *i;
-            realTimeProcess.init = inicio;
-            realTimeProcess.duration = duracao;
-            realTimeProcess.policy = REAL_TIME;
-            realTimeProcess.started = FALSE;
+    char line[100]; // Variável para armazenar cada linha do arquivo
 
-            lstProcess[*i] = realTimeProcess;
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (sscanf(line, "Run %s I=%d D=%d", processName, &inicio, &duracao) == 3) {
+            // Se a linha corresponde ao padrão esperado (com informações de I e D),
+            // define policy como 'I'.
+            policy = 'RT';
+        } else if (sscanf(line, "Run %s", processName) == 1) {
+            // Se a linha corresponde ao padrão esperado (sem informações adicionais),
+            // define policy como 'A' e zera inicio e duracao.
+            inicio = 0;
+            duracao = 0;
+        } else {
+            // Se a linha não corresponde ao padrão esperado, pula para a próxima linha.
+            continue;
+        }
+
+        if (policy == 'RT')
+        { // Processo REAL TIME
+            if (isOK(lstProcess, *i, inicio, duracao))
+            {
+                Process realTimeProcess;
+                strcpy(realTimeProcess.name, processName);
+                realTimeProcess.index = *i;
+                realTimeProcess.init = inicio;
+                realTimeProcess.duration = duracao;
+                realTimeProcess.policy = REAL_TIME;
+                realTimeProcess.started = FALSE;
+
+                lstProcess[*i] = realTimeProcess;
+
+                (*i)++;
+            }
+            else
+            {
+                printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
+            }
+
+            policy = 'A';
+            inicio = -1;
+            duracao = 1;
+        }
+        else
+        { // Processo ROUND ROBIN
+            Process roundRobinProcess;
+            strcpy(roundRobinProcess.name, processName);
+            roundRobinProcess.index = *i;
+            roundRobinProcess.init = -1;
+            roundRobinProcess.duration = 1;
+            roundRobinProcess.policy = ROUND_ROBIN;
+            roundRobinProcess.started = FALSE;
+
+            lstProcess[*i] = roundRobinProcess;
 
             (*i)++;
         }
-        else
-        {
-            printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
-        }
-
-        policy = 'A';
-        inicio = -1;
-        duracao = 1;
+        sleep(1);
     }
-    else
-    { // Processo ROUND ROBIN
-        Process roundRobinProcess;
-        strcpy(roundRobinProcess.name, processName);
-        roundRobinProcess.index = *i;
-        roundRobinProcess.init = -1;
-        roundRobinProcess.duration = 1;
-        roundRobinProcess.policy = ROUND_ROBIN;
-        roundRobinProcess.started = FALSE;
-
-        lstProcess[*i] = roundRobinProcess;
-
-        (*i)++;
-    }
-    sleep(1);
-}
-
 
     fclose(fp); // Fecha o arquivo
 }
+
 
 /*
     A função "executeChildProcess" executa o código do processo filho.
