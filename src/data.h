@@ -42,5 +42,5 @@ void dequeue(Queue *q);
 Node* merge(Node* left, Node* right);
 void split(Node* source, Node** frontRef, Node** backRef);
 void mergeSort(Node** headRef);
-void displayQueue(Queue *q);
+void printQueue(Queue *q);
 void queueSort(Queue *q);

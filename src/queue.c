@@ -150,13 +150,13 @@ void dequeue(Queue *q)
 
 
 /*
-    A função "displayQueue" exibe o conteúdo da fila.
+    A função "printQueue" exibe o conteúdo da fila.
     Se a fila estiver vazia, exibe uma mensagem informando que a fila está vazia.
     Caso contrário, percorre a fila e imprime o nome de cada processo seguido por uma seta "->".
     Por fim, exibe a indicação de final da fila.
 */
 
-void displayQueue(Queue *q)
+void printQueue(Queue *q)
 {
     if (isEmpty(q))
     {
