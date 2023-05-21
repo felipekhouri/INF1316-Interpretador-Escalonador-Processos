@@ -12,13 +12,14 @@
 #include "data.h"
 
 // Protótipos das funções
-
 void handleSignal(int sig);
 char* concatenateStrings(const char* str1, const char* str2);
 void executeProcess(Process currentP);
+void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQueue, pid_t* pid);
+void executeRealTimeProcess(Queue* rtQueue, pid_t* pid);
+void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid);
 
 // Variáveis globais
-
 int shouldTerminate = 0;
 
 int main(void){
@@ -64,64 +65,18 @@ int main(void){
         printf("\n%.1f s\n", sec);
         
         if (processInfo[i].index == i){
-            currentP = processInfo[i];
-
-            if (currentP.policy == REAL_TIME){
-                enqueue(&rtQueue, currentP); // Adiciona o processo na fila Real Time
-                queueSort(&rtQueue); // Ordena a fila Real Time com base na prioridade
-            }
-            else if (currentP.policy == ROUND_ROBIN){
-                enqueue(&rrQueue, currentP); // Adiciona o processo na fila Round Robin
-                queueSort(&rrQueue); // Ordena a fila Round Robin com base na prioridade
-            }
-
+            processReceived(processInfo, i, &rrQueue, &rtQueue, pid);
             i++;
         } 
 
         /* Inicia a execução dos processos */ 
         /* Processo do Real Time */
         if ((!isEmpty(&rtQueue)) && (rtQueue.front->process.init == sec)){
-            // O primeiro da fila entra em execução
-            p = rtQueue.front->process;
-            if (!p.started){
-                executeProcess(p); // Executa o processo pela primeira vez
-                sleep(p.duration); // Deixa o programa parado pelo tempo do processo
-                p.pid = *pid; // Pega o pid do processo
-                p.started = 1; // Indica que o processo começou
-            }
-            else{
-                kill(p.pid, SIGCONT); // Continua o processo já executado uma vez
-                sleep(p.duration); // Deixa o programa parado pelo tempo do processo
-            }
-
-            kill(p.pid, SIGSTOP); // Pausa o processo
-            
-            dequeue(&rtQueue); // Remove o processo da fila Real Time
-            enqueue(&rtQueue, p); // Adiciona o processo de volta na fila Real Time
-            printf("\n\nFila Real Time:\n");
-            displayQueue(&rtQueue); // Imprime a Fila de processos Real Time
+            executeRealTimeProcess(&rtQueue, pid);
         }
         /* Processo do Round Robin */
         else if (!isEmpty(&rrQueue)){
-            p = rrQueue.front->process;
-        
-            if (!p.started)
-			{
-                executeProcess(p); // Executa o processo pela primeira vez    
-                sleep(p.duration); // Deixa o programa parado pelo tempo do processo
-                p.pid = *pid; // Pega o PID do processo
-                p.started = 1; // Indica que o processo começou
-            }
-            else
-			{
-                kill(p.pid, SIGCONT); // Continua o processo já executado uma vez
-                sleep(p.duration); // Deixa o programa parado pelo tempo do processo
-            }
-            kill(p.pid, SIGSTOP); // Pausa o processo         
-            dequeue(&rrQueue); // Remove o processo da fila Round Robin
-            enqueue(&rrQueue, p); // Adiciona o processo de volta na fila Round Robin
-            printf("\n\nFila Round Robin:\n");
-            displayQueue(&rrQueue); // Imprime a Fila de processos Round Robin
+            executeRoundRobinProcess(&rrQueue, pid);
         }
     }
 
@@ -132,10 +87,8 @@ int main(void){
     return 0;
 }
 
-
-
 /*
-    A função "handleSignal" é um tratador de sinal para o sinal SIGINT.
+    Função que trata o sinal SIGINT (Ctrl+C).
     Quando esse sinal é recebido, a variável global "shouldTerminate" é configurada para 1,
     indicando que o programa deve terminar.
 */
@@ -143,7 +96,29 @@ void handleSignal(int sig) {
     shouldTerminate = 1;
 }
 
+/*
+    A função "concatenateStrings" recebe duas strings e retorna uma nova string
+    que é a concatenação das duas.
+    Ela aloca memória suficiente para armazenar a nova string e a concatena
+    usando as funções strcpy e strcat.
+    Caso ocorra algum erro na alocação de memória, a função exibe uma mensagem de erro e encerra o programa.
+*/
+char* concatenateStrings(const char* str1, const char* str2) {
+    size_t str1Size = strlen(str1);
+    size_t str2Size = strlen(str2);
+    size_t totalSize = str1Size + str2Size + 1;
 
+    char* result = (char*)malloc(totalSize);
+
+    if (result == NULL) {
+        perror("Erro ao alocar memória");
+        exit(1);
+    }
+
+    strcpy(result, str1);
+    strcat(result, str2);
+    return result;
+}
 
 /*
     A função "executeProcess" recebe um objeto Processo e executa o programa associado a ele.
@@ -154,12 +129,81 @@ void handleSignal(int sig) {
     Após a execução do programa, a função retorna.
 */
 void executeProcess(Process p){
-    char path[20] = "./";
+    char *path = "./";
     char *argv[] = {p.name, NULL};
-    strcat(path, p.name);
+    
+    path = concatenateStrings(path, p.name);
     if(fork() == 0){
         printf("Iniciando %s\n", p.name);
         execvp(path, argv);
     } 
     return;
+}
+
+/*
+    Função que processa um processo recebido.
+    Ela adiciona o processo na fila apropriada (Round Robin ou Real Time) com base em sua política.
+*/
+void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQueue, pid_t* pid) {
+    Process currentP = processInfo[index];
+
+    if (currentP.policy == REAL_TIME){
+        enqueue(rtQueue, currentP); // Adiciona o processo na fila Real Time
+        queueSort(rtQueue); // Ordena a fila Real Time com base na prioridade
+    }
+    else if (currentP.policy == ROUND_ROBIN){
+        enqueue(rrQueue, currentP); // Adiciona o processo na fila Round Robin
+        queueSort(rrQueue); // Ordena a fila Round Robin com base na prioridade
+    }
+}
+
+/*
+    Função que executa o próximo processo da fila Real Time.
+    Ela inicia a execução do processo pela primeira vez ou continua sua execução se já foi iniciado.
+    Após a execução do tempo do processo, ele é pausado e colocado de volta na fila.
+    Em seguida, a fila é exibida.
+*/
+void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
+    Process p = rtQueue->front->process;
+    if (!p.started){
+        executeProcess(p); // Executa o processo pela primeira vez
+        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+        p.pid = *pid; // Pega o pid do processo
+        p.started = 1; // Indica que o processo começou
+    }
+    else{
+        kill(p.pid, SIGCONT); // Continua o processo já executado uma vez
+        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+    }
+    kill(p.pid, SIGSTOP); // Pausa o processo
+    dequeue(rtQueue); // Remove o processo da fila Real Time
+    enqueue(rtQueue, p); // Adiciona o processo de volta na fila Real Time
+    printf("\n\nFila Real Time:\n");
+    displayQueue(rtQueue); // Imprime a Fila de processos Real Time
+}
+
+/*
+    Função que executa o próximo processo da fila Round Robin.
+    Ela inicia a execução do processo pela primeira vez ou continua sua execução se já foi iniciado.
+    Após a execução do tempo do processo, ele é pausado e colocado de volta na fila.
+    Em seguida, a fila é exibida.
+*/
+void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid) {
+    Process p = rrQueue->front->process;
+    
+    if (!p.started){
+        executeProcess(p); // Executa o processo pela primeira vez    
+        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+        p.pid = *pid; // Pega o PID do processo
+        p.started = 1; // Indica que o processo começou
+    }
+    else{
+        kill(p.pid, SIGCONT); // Continua o processo já executado uma vez
+        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+    }
+    kill(p.pid, SIGSTOP); // Pausa o processo         
+    dequeue(rrQueue); // Remove o processo da fila Round Robin
+    enqueue(rrQueue, p); // Adiciona o processo de volta na fila Round Robin
+    printf("\n\nFila Round Robin:\n");
+    displayQueue(rrQueue); // Imprime a Fila de processos Round Robin
 }
