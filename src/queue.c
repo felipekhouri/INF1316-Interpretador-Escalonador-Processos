@@ -11,11 +11,11 @@ void initQueue(Queue *q)
 
 int isEmpty(Queue *q)
 {
-    if (q->front == NULL)
+    if (q->front != NULL)
     {
-        return TRUE;
+        return FALSE;
     }
-    return FALSE;
+    return TRUE;
 }
 
 void enqueue(Queue *q, Process p)
@@ -27,54 +27,15 @@ void enqueue(Queue *q, Process p)
     if (isEmpty(q))
     {
         q->front = newNode;
-        q->rear = newNode;
     }
     else
     {
         q->rear->next = newNode;
-        q->rear = newNode;
     }
+
+    q->rear = newNode;
 }
 
-void dequeue(Queue *q)
-{
-    if (isEmpty(q))
-    {
-        printf("A fila está vazia. Nenhum elemento para remover.\n");
-        return;
-    }
-
-    Node *temp = q->front;
-    q->front = q->front->next; // Segundo da fila
-
-    if (q->front == NULL)
-    {                   // Se a fila só tinha um elemento
-        q->rear = NULL; // Fila se torna vazia
-    }
-
-    free(temp); // Libera o antigo primeiro da fila
-}
-
-void displayQueue(Queue *q)
-{
-    if (isEmpty(q))
-    {
-        printf("A fila está vazia.\n");
-        return;
-    }
-
-    Node *temp = q->front;
-    printf("*******************\n");
-
-    while (temp != NULL)
-    {
-        // printf("%s\nInício: %d' \nDuração: %d' \n", temp->process.name, temp->process.init, temp->process.duration);
-        printf("%s -> ", temp->process.name);
-        temp = temp->next;
-    }
-
-    printf("FINAL DA FILA\n*******************\n");
-}
 
 Node* merge(Node* left, Node* right)
 {
@@ -139,3 +100,42 @@ void queueSort(Queue* q)
 
     mergeSort(&q->front);
 }
+
+
+void dequeue(Queue *q)
+{
+    if (isEmpty(q))
+    {
+        printf("A fila está vazia. Nenhum elemento para remover.\n");
+        return;
+    }
+
+    Node *temp = q->front;
+    q->front = q->front->next; // Segundo da fila
+
+    if (q->front == NULL)
+    {                   // Se a fila só tinha um elemento
+        q->rear = NULL; // Fila se torna vazia
+    }
+
+    free(temp); // Libera o antigo primeiro da fila
+}
+
+void displayQueue(Queue *q)
+{
+    if (isEmpty(q))
+    {
+        printf("A fila está vazia.\n");
+        return;
+    }
+
+    printf("*******************\n");
+
+    for (Node *temp = q->front; temp != NULL; temp = temp->next)
+    {
+        printf("%s -> ", temp->process.name);
+    }
+
+    printf("FINAL DA FILA\n*******************\n");
+}
+
