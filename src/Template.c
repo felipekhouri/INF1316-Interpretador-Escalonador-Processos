@@ -9,11 +9,6 @@
 #define SHM_KEY2 7000
 
 int main(int argc, char* argv[]){
-
-    int shmid_pid = shmget(SHM_KEY2, sizeof(pid_t), IPC_CREAT | 0666);
-    pid_t* pid = shmat(shmid_pid, 0, 0);
-
-    *pid = getpid();
     
     for(EVER){
         printf("Executando %s\n",argv[0]);

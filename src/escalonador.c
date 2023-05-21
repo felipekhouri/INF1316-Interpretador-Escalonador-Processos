@@ -25,7 +25,6 @@ int shouldTerminate = 0;
 int main(void){
     int shared_memory, shmid_pid; // IDs da memória compartilhada
     pid_t* pid; // Ponteiro para o ID do processo
-	Process currentP; // Variável para armazenar o processo atual
     Process *processInfo; // Ponteiro para a informação do processo
     int i = 0; // Índice do processo
 
@@ -54,14 +53,13 @@ int main(void){
     initQueue(&rrQueue); // Inicializa a fila Round Robin
     initQueue(&rtQueue); // Inicializa a fila Real Time
     initQueue(&ioQueue); // Inicializa a fila I/O Bound
-    Process p; // Variável para armazenar o processo
     signal(SIGINT, handleSignal); // Configura o tratador de sinal para SIGINT (Ctrl+C)
     gettimeofday(&init, NULL); // Obtém o tempo de início
 
     while (!shouldTerminate){
         gettimeofday(&end, NULL); // Obtém o tempo atual
         sec = ((end.tv_sec - init.tv_sec) % 60); // Calcula os segundos decorridos
-        printf("\n%.1f s\n", sec);
+        printf("\n================================\nT: %.1fs\n", sec);
         
         if (processInfo[i].index == i){
             processReceived(processInfo, i, &rrQueue, &rtQueue, pid);
@@ -133,7 +131,10 @@ void executeProcess(Process p){
     
     strcat(path, p.name);
     if(fork() == 0){
-        printf("Iniciando %s | PID:\n", p.name,p.pid);
+        int shmid_pid = shmget(SHM_KEY2, sizeof(pid_t), IPC_CREAT | 0666);
+        pid_t* pid = shmat(shmid_pid, 0, 0);
+        *pid = getpid();
+        printf("Iniciando %s | PID: %d\n", p.name,*pid);
         execvp(path, argv);
     } 
     return;
@@ -165,6 +166,7 @@ void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQ
 void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
     Process p = rtQueue->front->process;
     if (!p.started){
+        printf("Preepção por RT\n");
         executeProcess(p); // Executa o processo pela primeira vez
         sleep(p.duration); // Deixa o programa parado pelo tempo do processo
         p.pid = *pid; // Pega o pid do processo
@@ -177,7 +179,7 @@ void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
     kill(p.pid, SIGSTOP); // Pausa o processo
     dequeue(rtQueue); // Remove o processo da fila Real Time
     enqueue(rtQueue, p); // Adiciona o processo de volta na fila Real Time
-    printf("\n\nFila Real Time:\n");
+    printf("Fila Real Time ");
     displayQueue(rtQueue); // Imprime a Fila de processos Real Time
 }
 
@@ -203,6 +205,6 @@ void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid) {
     kill(p.pid, SIGSTOP); // Pausa o processo         
     dequeue(rrQueue); // Remove o processo da fila Round Robin
     enqueue(rrQueue, p); // Adiciona o processo de volta na fila Round Robin
-    printf("\n\nFila Round Robin:\n");
+    printf("Fila Round Robin ");
     displayQueue(rrQueue); // Imprime a Fila de processos Round Robin
 }

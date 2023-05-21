@@ -59,83 +59,46 @@ void displayQueue(Queue *q)
 {
     if (isEmpty(q))
     {
-        printf("A fila está vazia.\n");
+        printf("Fila vazia\n");
         return;
     }
 
     Node *temp = q->front;
-    printf("*******************\n");
 
     while (temp != NULL)
     {
-        // printf("%s\nInício: %d' \nDuração: %d' \n", temp->process.name, temp->process.init, temp->process.duration);
-        printf("%s -> ", temp->process.name);
+        printf("->%s", temp->process.name);
         temp = temp->next;
     }
 
-    printf("FINAL DA FILA\n*******************\n");
 }
 
-Node* merge(Node* left, Node* right)
-{
-    if (left == NULL)
-        return right;
-    if (right == NULL)
-        return left;
-
-    Node* result = NULL;
-
-    if (left->process.init <= right->process.init) {
-        result = left;
-        result->next = merge(left->next, right);
-    }
-    else {
-        result = right;
-        result->next = merge(left, right->next);
-    }
-
-    return result;
-}
-
-void split(Node* source, Node** frontRef, Node** backRef)
-{
-    Node* slow = source;
-    Node* fast = source->next;
-
-    while (fast != NULL) {
-        fast = fast->next;
-        if (fast != NULL) {
-            slow = slow->next;
-            fast = fast->next;
-        }
-    }
-
-    *frontRef = source;
-    *backRef = slow->next;
-    slow->next = NULL;
-}
-
-void mergeSort(Node** headRef)
-{
-    Node* head = *headRef;
-    Node* a;
-    Node* b;
-
-    if (head == NULL || head->next == NULL)
-        return;
-
-    split(head, &a, &b);
-
-    mergeSort(&a);
-    mergeSort(&b);
-
-    *headRef = merge(a, b);
-}
-
-void queueSort(Queue* q)
+void queueSort(Queue *q)
 {
     if (isEmpty(q) || q->front->next == NULL)
+    {
         return;
+    }
 
-    mergeSort(&q->front);
+    Node *currNode = q->front;
+    int swapped;
+    Process temp;
+
+    do
+    {
+        swapped = 0;
+        currNode = q->front;
+
+        while (currNode->next != NULL)
+        {
+            if (currNode->process.init > currNode->next->process.init)
+            {
+                temp = currNode->process;
+                currNode->process = currNode->next->process;
+                currNode->next->process = temp;
+                swapped = 1;
+            }
+            currNode = currNode->next;
+        }
+    } while (swapped);
 }
