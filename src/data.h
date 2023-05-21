@@ -14,12 +14,12 @@
 
 typedef struct process
 {
-    char name[8]; // Nome do Programa
-    int index;     // Numero do processo
-    int init;      // Inicio (tempo)
-    int duration;  // tempo de duracao
-    int policy;    // 0 = REAL_TIME | 1 = ROUND_ROBIN
-    int started;   // rodou uma vez ou não
+    char filename[8];      // Processo a ser executado
+    int schedulingAlg;    // 0 = RT & 1 = RR
+    int I;    // Inicio do tempo de execução 
+    int index;     
+    int D;  
+    int started;   
     pid_t pid;
 } Process;
 
@@ -31,13 +31,16 @@ typedef struct node
 
 typedef struct queue
 {
-    Node *front;
-    Node *rear;
+    Node *ahead;
+    Node *behind;
 } Queue;
 
 void initQueue(Queue *q);
 int isEmpty(Queue *q);
 void enqueue(Queue *q, Process p);
 void dequeue(Queue *q);
+Node* merge(Node* left, Node* right);
+void split(Node* source, Node** frontRef, Node** backRef);
+void mergeSort(Node** headRef);
 void displayQueue(Queue *q);
 void queueSort(Queue *q);

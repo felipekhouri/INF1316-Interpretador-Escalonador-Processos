@@ -5,13 +5,13 @@
 
 void initQueue(Queue *q)
 {
-    q->front = NULL;
-    q->rear = NULL;
+    q->ahead = NULL;
+    q->behind = NULL;
 }
 
 int isEmpty(Queue *q)
 {
-    if (q->front != NULL)
+    if (q->ahead != NULL)
     {
         return FALSE;
     }
@@ -32,14 +32,14 @@ void enqueue(Queue *q, Process p)
 
     if (isEmpty(q))
     {
-        q->front = newNode;
+        q->ahead = newNode;
     }
     else
     {
-        q->rear->next = newNode;
+        q->behind->next = newNode;
     }
 
-    q->rear = newNode;
+    q->behind = newNode;
 }
 
 
@@ -61,18 +61,18 @@ Node* merge(Node* left, Node* right)
     if (right == NULL)
         return left;
 
-    Node* result = NULL;
+    Node* outcome = NULL;
 
-    if (left->process.init <= right->process.init) {
-        result = left;
-        result->next = merge(left->next, right);
+    if (left->process.I <= right->process.I) {
+        outcome = left;
+        outcome->next = merge(left->next, right);
     }
     else {
-        result = right;
-        result->next = merge(left, right->next);
+        outcome = right;
+        outcome->next = merge(left, right->next);
     }
 
-    return result;
+    return outcome;
 }
 
 void split(Node* source, Node** frontRef, Node** backRef)
@@ -112,18 +112,18 @@ void mergeSort(Node** headRef)
 
 void queueSort(Queue* q)
 {
-    if (isEmpty(q) || q->front->next == NULL)
+    if (isEmpty(q) || q->ahead->next == NULL)
         return;
 
-    mergeSort(&q->front);
+    mergeSort(&q->ahead);
 }
 
 
 /*
     A função "dequeue" remove o primeiro elemento da fila.
     Se a fila estiver vazia, exibe uma mensagem de erro.
-    Caso contrário, atualiza o ponteiro "front" para o próximo elemento da fila.
-    Se o elemento removido for o último da fila, o ponteiro "rear" também é atualizado para NULL,
+    Caso contrário, atualiza o ponteiro "ahead" para o próximo elemento da fila.
+    Se o elemento removido for o último da fila, o ponteiro "behind" também é atualizado para NULL,
     indicando que a fila está vazia.
     Por fim, libera a memória ocupada pelo antigo primeiro elemento.
 */
@@ -136,15 +136,15 @@ void dequeue(Queue *q)
         return;
     }
 
-    Node *temp = q->front;
-    q->front = q->front->next; // Segundo da fila
+    Node *tmp = q->ahead;
+    q->ahead = q->ahead->next; // Segundo da fila
 
-    if (q->front == NULL)
+    if (q->ahead == NULL)
     {                   // Se a fila só tinha um elemento
-        q->rear = NULL; // Fila se torna vazia
+        q->behind = NULL; // Fila se torna vazia
     }
 
-    free(temp); // Libera o antigo primeiro da fila
+    free(tmp); // Libera o antigo primeiro da fila
 }
 
 
@@ -166,9 +166,9 @@ void displayQueue(Queue *q)
 
     printf("*******************\n");
 
-    for (Node *temp = q->front; temp != NULL; temp = temp->next)
+    for (Node *tmp = q->ahead; tmp != NULL; tmp = tmp->next)
     {
-        printf("%s -> ", temp->process.name);
+        printf("%s -> ", tmp->process.filename);
     }
 
     printf("FINAL DA FILA\n*******************\n");

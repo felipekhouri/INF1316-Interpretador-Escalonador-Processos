@@ -12,6 +12,7 @@
 #include "data.h"
 
 // Protótipos das funções
+
 void handleSignal(int sig);
 char* concatenateStrings(const char* str1, const char* str2);
 void executeProcess(Process currentP);
@@ -70,7 +71,7 @@ int main(void){
 
         /* Inicia a execução dos processos */ 
         /* Processo do Real Time */
-        if ((!isEmpty(&rtQueue)) && (rtQueue.front->process.init == sec)){
+        if ((!isEmpty(&rtQueue)) && (rtQueue.ahead->process.I == sec)){
             executeRealTimeProcess(&rtQueue, pid);
         }
         /* Processo do Round Robin */
@@ -105,16 +106,16 @@ void handleSignal(int sig) {
 char* concatenateStrings(const char* str1, const char* str2) {
     size_t totalSize = strlen(str1) + strlen(str2) + 1;
 
-    char* result = (char*)malloc(totalSize);
+    char* outcome = (char*)malloc(totalSize);
 
-    if (result == NULL) {
+    if (outcome == NULL) {
         perror("Erro ao alocar memória");
         exit(1);
     }
 
-    memcpy(result, str1, strlen(str1));
-    memcpy(result + strlen(str1), str2, strlen(str2) + 1);
-    return result;
+    memcpy(outcome, str1, strlen(str1));
+    memcpy(outcome + strlen(str1), str2, strlen(str2) + 1);
+    return outcome;
 }
 
 /*
@@ -127,11 +128,11 @@ char* concatenateStrings(const char* str1, const char* str2) {
 */
 void executeProcess(Process p){
     char path[20] = "./";
-    char *argv[] = {p.name, NULL};
+    char *argv[] = {p.filename, NULL};
     
-    strcat(path, p.name);
+    strcat(path, p.filename);
     if(fork() == 0){
-        printf("Iniciando %s | PID:\n", p.name,p.pid);
+        printf("Iniciando %s | PID:\n", p.filename,p.pid);
         execvp(path, argv);
     } 
     return;
@@ -144,11 +145,11 @@ void executeProcess(Process p){
 void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQueue, pid_t* pid) {
     Process currentP = processInfo[index];
 
-    if (currentP.policy == REAL_TIME){
+    if (currentP.schedulingAlg == REAL_TIME){
         enqueue(rtQueue, currentP); // Adiciona o processo na fila Real Time
         queueSort(rtQueue); // Ordena a fila Real Time com base na prioridade
     }
-    else if (currentP.policy == ROUND_ROBIN){
+    else if (currentP.schedulingAlg == ROUND_ROBIN){
         enqueue(rrQueue, currentP); // Adiciona o processo na fila Round Robin
         queueSort(rrQueue); // Ordena a fila Round Robin com base na prioridade
     }
@@ -161,16 +162,16 @@ void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQ
     Em seguida, a fila é exibida.
 */
 void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
-    Process p = rtQueue->front->process;
+    Process p = rtQueue->ahead->process;
     if (!p.started){
         executeProcess(p); // Executa o processo pela primeira vez
-        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+        sleep(p.D); // Deixa o programa parado pelo tempo do processo
         p.pid = *pid; // Pega o pid do processo
         p.started = 1; // Indica que o processo começou
     }
     else{
         kill(p.pid, SIGCONT); // Continua o processo já executado uma vez
-        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+        sleep(p.D); // Deixa o programa parado pelo tempo do processo
     }
     kill(p.pid, SIGSTOP); // Pausa o processo
     dequeue(rtQueue); // Remove o processo da fila Real Time
@@ -186,17 +187,17 @@ void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
     Em seguida, a fila é exibida.
 */
 void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid) {
-    Process p = rrQueue->front->process;
+    Process p = rrQueue->ahead->process;
     
     if (!p.started){
         executeProcess(p); // Executa o processo pela primeira vez    
-        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+        sleep(p.D); // Deixa o programa parado pelo tempo do processo
         p.pid = *pid; // Pega o PID do processo
         p.started = 1; // Indica que o processo começou
     }
     else{
         kill(p.pid, SIGCONT); // Continua o processo já executado uma vez
-        sleep(p.duration); // Deixa o programa parado pelo tempo do processo
+        sleep(p.D); // Deixa o programa parado pelo tempo do processo
     }
     kill(p.pid, SIGSTOP); // Pausa o processo         
     dequeue(rrQueue); // Remove o processo da fila Round Robin
