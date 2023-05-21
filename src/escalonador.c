@@ -128,10 +128,10 @@ char* concatenateStrings(const char* str1, const char* str2) {
     Após a execução do programa, a função retorna.
 */
 void executeProcess(Process p){
-    char *path = "./";
+    char path[20] = "./";
     char *argv[] = {p.name, NULL};
     
-    path = concatenateStrings(path, p.name);
+    strcat(path, p.name);
     if(fork() == 0){
         printf("Iniciando %s\n", p.name);
         execvp(path, argv);
