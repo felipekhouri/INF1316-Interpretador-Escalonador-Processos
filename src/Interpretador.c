@@ -10,8 +10,8 @@
 
 // Protótipo das funções
 
-int isOK(Process *lp, int tam, int beginning, int duration);
 void readProcessesFromFile(const char* filename, Process* processCollection, int* i);
+int isProcessReady(Process *lp, int size, int beginning, int duration);
 void executeChildProcess(FILE* fp, Process* processCollection, int i);
 void executeParentProcess();
 
@@ -19,16 +19,16 @@ int main(void)
 {
     int i = 0; // Índice do processo
     char filename[] = "exec.txt"; // Nome do arquivo de entrada
-    size_t segmento; // ID da memória compartilhada
+    size_t segmentIdentifier; // ID da memória compartilhada
     Process *processCollection; // Ponteiro para a lista de processos
 
-    segmento = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
-    if (segmento == -1)
+    segmentIdentifier = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
+    if (segmentIdentifier == -1)
     {
         perror("Erro ao alocar memória compartilhada");
         exit(1);
     }
-    processCollection = shmat(segmento, 0, 0);
+    processCollection = shmat(segmentIdentifier, 0, 0);
 
     FILE *fp = fopen(filename, "r"); // Abre o arquivo para leitura
 
@@ -53,15 +53,15 @@ int main(void)
 }
 
 /*
-    A função "isOK" verifica se um novo processo pode ser executado no instante de início especificado.
+    A função "isProcessReady" verifica se um novo processo pode ser executado no instante de início especificado.
     Ela percorre a lista de processos já existentes e verifica se há conflito de tempo.
     Se houver algum processo em execução no intervalo [beginning, beginning + duration] ou se o tempo de execução ultrapassar 60 segundos,
     retorna FALSE, indicando que o processo não pode ser executado.
     Caso contrário, retorna TRUE, indicando que o processo pode ser executado.
 */
-int isOK(Process *lp, int tam, int beginning, int duration)
+int isProcessReady(Process *lp, int size, int beginning, int duration)
 {
-    for (int i = 0; i < tam; i++)
+    for (int i = 0; i < size; i++)
     {
         if ((beginning >= lp[i].I) && (beginning <= (lp[i].I + lp[i].D)))
         {
@@ -120,7 +120,7 @@ void readProcessesFromFile(const char* filename, Process* processCollection, int
 
         if (schedulingAlg == 'T')
         { // Processo REAL TIME
-            if (isOK(processCollection, *i, beginning, duration))
+            if (isProcessReady(processCollection, *i, beginning, duration))
             {
                 Process realTimeProcess;
                 strcpy(realTimeProcess.filename, processName);

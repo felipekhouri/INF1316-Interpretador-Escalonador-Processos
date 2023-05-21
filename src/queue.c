@@ -9,7 +9,7 @@ void initQueue(Queue *q)
     q->behind = NULL;
 }
 
-int isEmpty(Queue *q)
+int isQueueEmpty(Queue *q)
 {
     if (q->ahead != NULL)
     {
@@ -30,7 +30,7 @@ void enqueue(Queue *q, Process p)
     newNode->process = p;
     newNode->next = NULL;
 
-    if (isEmpty(q))
+    if (isQueueEmpty(q))
     {
         q->ahead = newNode;
     }
@@ -112,7 +112,7 @@ void mergeSort(Node** headRef)
 
 void queueSort(Queue* q)
 {
-    if (isEmpty(q) || q->ahead->next == NULL)
+    if (isQueueEmpty(q) || q->ahead->next == NULL)
         return;
 
     mergeSort(&q->ahead);
@@ -130,7 +130,7 @@ void queueSort(Queue* q)
 
 void dequeue(Queue *q)
 {
-    if (isEmpty(q))
+    if (isQueueEmpty(q))
     {
         printf("A fila está vazia. Nenhum elemento para remover.\n");
         return;
@@ -158,7 +158,7 @@ void dequeue(Queue *q)
 
 void printQueue(Queue *q)
 {
-    if (isEmpty(q))
+    if (isQueueEmpty(q))
     {
         printf("Fila vazia.\n");
         return;

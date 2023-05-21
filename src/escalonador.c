@@ -16,9 +16,9 @@
 void handleSignal(int sig);
 char* concatenateStrings(const char* str1, const char* str2);
 void executeProcess(Process currentP);
-void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQueue, pid_t* pid);
-void executeRealTimeProcess(Queue* rtQueue, pid_t* pid);
-void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid);
+void processReceived(Process* processInfo, int index, Queue* roundRobinQueue, Queue* realTimeQueue, pid_t* pid);
+void executeRealTimeProcess(Queue* realTimeQueue, pid_t* pid);
+void executeRoundRobinProcess(Queue* roundRobinQueue, pid_t* pid);
 
 // Variáveis globais
 int shouldTerminate = 0;
@@ -48,11 +48,11 @@ int main(void){
         exit(1);
     }
 
-    Queue rrQueue; // Fila para políticas Round Robin
-    Queue rtQueue; // Fila para políticas Real Time
+    Queue roundRobinQueue; // Fila para políticas Round Robin
+    Queue realTimeQueue; // Fila para políticas Real Time
     Queue ioQueue; // Fila para políticas I/O Bound
-    initQueue(&rrQueue); // Inicializa a fila Round Robin
-    initQueue(&rtQueue); // Inicializa a fila Real Time
+    initQueue(&roundRobinQueue); // Inicializa a fila Round Robin
+    initQueue(&realTimeQueue); // Inicializa a fila Real Time
     initQueue(&ioQueue); // Inicializa a fila I/O Bound
     signal(SIGINT, handleSignal); // Configura o tratador de sinal para SIGINT (Ctrl+C)
     gettimeofday(&init, NULL); // Obtém o tempo de início
@@ -63,18 +63,18 @@ int main(void){
         printf("\n================================\nT: %.1fs\n", sec);
         
         if (processInfo[i].index == i){
-            processReceived(processInfo, i, &rrQueue, &rtQueue, pid);
+            processReceived(processInfo, i, &roundRobinQueue, &realTimeQueue, pid);
             i++;
         } 
 
         /* Inicia a execução dos processos */ 
         /* Processo do Real Time */
-        if ((!isEmpty(&rtQueue)) && (rtQueue.ahead->process.I == sec)){
-            executeRealTimeProcess(&rtQueue, pid);
+        if ((!isQueueEmpty(&realTimeQueue)) && (realTimeQueue.ahead->process.I == sec)){
+            executeRealTimeProcess(&realTimeQueue, pid);
         }
         /* Processo do Round Robin */
-        else if (!isEmpty(&rrQueue)){
-            executeRoundRobinProcess(&rrQueue, pid);
+        else if (!isQueueEmpty(&roundRobinQueue)){
+            executeRoundRobinProcess(&roundRobinQueue, pid);
         }
     }
 
@@ -143,16 +143,16 @@ void executeProcess(Process p){
     Função que processa um processo recebido.
     Ela adiciona o processo na fila apropriada (Round Robin ou Real Time) com base em sua política.
 */
-void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQueue, pid_t* pid) {
+void processReceived(Process* processInfo, int index, Queue* roundRobinQueue, Queue* realTimeQueue, pid_t* pid) {
     Process currentP = processInfo[index];
 
     if (currentP.schedulingAlg == REAL_TIME){
-        enqueue(rtQueue, currentP); // Adiciona o processo na fila Real Time
-        queueSort(rtQueue); // Ordena a fila Real Time com base na prioridade
+        enqueue(realTimeQueue, currentP); // Adiciona o processo na fila Real Time
+        queueSort(realTimeQueue); // Ordena a fila Real Time com base na prioridade
     }
     else if (currentP.schedulingAlg == ROUND_ROBIN){
-        enqueue(rrQueue, currentP); // Adiciona o processo na fila Round Robin
-        queueSort(rrQueue); // Ordena a fila Round Robin com base na prioridade
+        enqueue(roundRobinQueue, currentP); // Adiciona o processo na fila Round Robin
+        queueSort(roundRobinQueue); // Ordena a fila Round Robin com base na prioridade
     }
 }
 
@@ -162,8 +162,8 @@ void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQ
     Após a execução do tempo do processo, ele é pausado e colocado de volta na fila.
     Em seguida, a fila é exibida.
 */
-void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
-    Process p = rtQueue->ahead->process;
+void executeRealTimeProcess(Queue* realTimeQueue, pid_t* pid) {
+    Process p = realTimeQueue->ahead->process;
     if (!p.started){
         printf("|Preempção REALTIME|\n");
         executeProcess(p); // Executa o processo pela primeira vez
@@ -176,10 +176,10 @@ void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
         sleep(p.D); // Deixa o programa parado pelo tempo do processo
     }
     kill(p.pid, SIGSTOP); // Pausa o processo
-    dequeue(rtQueue); // Remove o processo da fila Real Time
-    enqueue(rtQueue, p); // Adiciona o processo de volta na fila Real Time
+    dequeue(realTimeQueue); // Remove o processo da fila Real Time
+    enqueue(realTimeQueue, p); // Adiciona o processo de volta na fila Real Time
     printf("Fila REAL-TIME ");
-    printQueue(rtQueue); // Imprime a Fila de processos Real Time
+    printQueue(realTimeQueue); // Imprime a Fila de processos Real Time
 }
 
 /*
@@ -188,8 +188,8 @@ void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
     Após a execução do tempo do processo, ele é pausado e colocado de volta na fila.
     Em seguida, a fila é exibida.
 */
-void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid) {
-    Process p = rrQueue->ahead->process;
+void executeRoundRobinProcess(Queue* roundRobinQueue, pid_t* pid) {
+    Process p = roundRobinQueue->ahead->process;
     
     if (!p.started){
         executeProcess(p); // Executa o processo pela primeira vez    
@@ -202,8 +202,8 @@ void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid) {
         sleep(p.D); // Deixa o programa parado pelo tempo do processo
     }
     kill(p.pid, SIGSTOP); // Pausa o processo         
-    dequeue(rrQueue); // Remove o processo da fila Round Robin
-    enqueue(rrQueue, p); // Adiciona o processo de volta na fila Round Robin
+    dequeue(roundRobinQueue); // Remove o processo da fila Round Robin
+    enqueue(roundRobinQueue, p); // Adiciona o processo de volta na fila Round Robin
     printf("================================\nFila Round Robin ");
-    printQueue(rrQueue); // Imprime a Fila de processos Round Robin
+    printQueue(roundRobinQueue); // Imprime a Fila de processos Round Robin
 }

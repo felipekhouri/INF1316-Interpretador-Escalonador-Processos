@@ -36,7 +36,7 @@ typedef struct queue
 } Queue;
 
 void initQueue(Queue *q);
-int isEmpty(Queue *q);
+int isQueueEmpty(Queue *q);
 void enqueue(Queue *q, Process p);
 void dequeue(Queue *q);
 Node* merge(Node* left, Node* right);
