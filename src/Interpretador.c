@@ -107,7 +107,7 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
         if (sscanf(line, "Run %s I=%d D=%d", processName, &inicio, &duracao) == 3) {
             // Se a linha corresponde ao padrão esperado (com informações de I e D),
             // define policy como 'I'.
-            policy = 'RT';
+            policy = 'T';
         } else if (sscanf(line, "Run %s", processName) == 1) {
             // Se a linha corresponde ao padrão esperado (sem informações adicionais),
             // define policy como 'A' e zera inicio e duracao.
@@ -118,7 +118,7 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
             continue;
         }
 
-        if (policy == 'RT')
+        if (policy == 'T')
         { // Processo REAL TIME
             if (isOK(lstProcess, *i, inicio, duracao))
             {

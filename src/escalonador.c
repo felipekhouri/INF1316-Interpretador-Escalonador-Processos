@@ -203,6 +203,6 @@ void executeRoundRobinProcess(Queue* rrQueue, pid_t* pid) {
     kill(p.pid, SIGSTOP); // Pausa o processo         
     dequeue(rrQueue); // Remove o processo da fila Round Robin
     enqueue(rrQueue, p); // Adiciona o processo de volta na fila Round Robin
-    printf("Fila Round Robin ");
+    printf("================================\nFila Round Robin ");
     displayQueue(rrQueue); // Imprime a Fila de processos Round Robin
 }
