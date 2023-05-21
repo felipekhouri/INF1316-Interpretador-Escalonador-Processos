@@ -160,17 +160,13 @@ void displayQueue(Queue *q)
 {
     if (isEmpty(q))
     {
-        printf("A fila está vazia.\n");
+        printf("Fila vazia.\n");
         return;
     }
 
-    printf("*******************\n");
-
-    for (Node *tmp = q->ahead; tmp != NULL; tmp = tmp->next)
+    for (Node *temp = q->ahead; temp != NULL; temp = temp->next)
     {
-        printf("%s -> ", tmp->process.filename);
+        printf("->%s", temp->process.filename);
     }
-
-    printf("FINAL DA FILA\n*******************\n");
 }
 
