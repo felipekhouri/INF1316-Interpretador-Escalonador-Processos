@@ -14,7 +14,6 @@
 // Protótipos das funções
 
 void handleSignal(int sig);
-char* concatenateStrings(const char* str1, const char* str2);
 void executeProcess(Process currentP);
 void processReceived(Process* processInfo, int index, Queue* roundRobinQueue, Queue* realTimeQueue, pid_t* pid);
 void executeRealTimeProcess(Queue* realTimeQueue, pid_t* pid);
@@ -94,27 +93,6 @@ void handleSignal(int sig) {
     shouldTerminate = 1;
 }
 
-/*
-    A função "concatenateStrings" recebe duas strings e retorna uma nova string
-    que é a concatenação das duas.
-    Ela aloca memória suficiente para armazenar a nova string e a concatena
-    usando as funções strcpy e strcat.
-    Caso ocorra algum erro na alocação de memória, a função exibe uma mensagem de erro e encerra o programa.
-*/
-char* concatenateStrings(const char* str1, const char* str2) {
-    size_t totalSize = strlen(str1) + strlen(str2) + 1;
-
-    char* outcome = (char*)malloc(totalSize);
-
-    if (outcome == NULL) {
-        perror("Erro ao alocar memória");
-        exit(1);
-    }
-
-    memcpy(outcome, str1, strlen(str1));
-    memcpy(outcome + strlen(str1), str2, strlen(str2) + 1);
-    return outcome;
-}
 
 /*
     A função "executeProcess" recebe um objeto Processo e executa o programa associado a ele.
