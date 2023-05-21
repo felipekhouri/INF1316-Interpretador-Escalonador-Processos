@@ -24,10 +24,9 @@ int shouldTerminate = 0;
 
 int main(void){
     int shared_memory, shmid_pid; // IDs da memória compartilhada
-    Process currentP; // Variável para armazenar o processo atual
-    Process *processInfo; // Ponteiro para a informação do processo
     pid_t* pid; // Ponteiro para o ID do processo
-    
+	Process currentP; // Variável para armazenar o processo atual
+    Process *processInfo; // Ponteiro para a informação do processo
     int i = 0; // Índice do processo
 
     struct timeval init, end; // Variáveis para medir o tempo

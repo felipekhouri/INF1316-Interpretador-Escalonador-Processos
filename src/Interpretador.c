@@ -5,24 +5,21 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <signal.h>
 #include <sys/types.h>
 #include "data.h"
 
-// Protótipo da função
+// Protótipo das funções
 int isOK(Process *lp, int tam, int inicio, int duracao);
+void readProcessesFromFile(const char* filename, Process* lstProcess, int* i);
+void executeChildProcess(FILE* fp, Process* lstProcess, int i);
+void executeParentProcess();
 
 int main(void)
 {
     int i = 0; // Índice do processo
-    int inicio = 0; // Variável para armazenar o instante de início do processo
-    int duracao = 0; // Variável para armazenar a duração do processo
-    char policy; // Variável para armazenar a política do processo (I: REAL TIME, A: ROUND ROBIN)
-
     char filename[] = "exec.txt"; // Nome do arquivo de entrada
     size_t segmento; // ID da memória compartilhada
     Process *lstProcess; // Ponteiro para a lista de processos
-    char processName[10]; // Nome do processo
 
     segmento = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
     if (segmento == -1)
@@ -31,8 +28,9 @@ int main(void)
         exit(1);
     }
     lstProcess = shmat(segmento, 0, 0);
+
     FILE *fp = fopen(filename, "r"); // Abre o arquivo para leitura
-	
+
     if (!fp)
     {
         puts("Erro ao abrir o arquivo.");
@@ -42,49 +40,11 @@ int main(void)
     pid_t pid = fork();
     if (pid == 0)
     { // Processo filho
-        while (fscanf(fp, "%*s <%[^>]> %c=<%d> D=<%d>", processName, &policy, &inicio, &duracao) != EOF)
-        {
-            // Lê cada linha do arquivo
-            if (policy == 'I')
-            { // Processo REAL TIME
-                if (isOK(lstProcess, i, inicio, duracao))
-                {
-                    strcpy(lstProcess[i].name, processName);
-                    lstProcess[i].index = i;
-                    lstProcess[i].init = inicio;
-                    lstProcess[i].duration = duracao;
-                    lstProcess[i].policy = REAL_TIME;
-                    lstProcess[i].started = FALSE;
-
-                    i++;
-                }
-                else
-                {
-                    printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
-                }
-
-                policy = 'A';
-                inicio = -1;
-                duracao = 1;
-            }
-            else
-            { // Processo ROUND ROBIN
-                strcpy(lstProcess[i].name, processName);
-                lstProcess[i].index = i;
-                lstProcess[i].init = -1;
-                lstProcess[i].duration = 1;
-                lstProcess[i].policy = ROUND_ROBIN;
-                lstProcess[i].started = FALSE;
-                i++;
-            }
-            sleep(1);
-        }
+        executeChildProcess(fp, lstProcess, i);
     }
     else if (pid > 0)
     { // Processo pai
-        char *argv[] = {NULL};
-        sleep(1);
-        execvp("./escalonador", argv); // Executa o escalonador
+        executeParentProcess();
     }
 
     fclose(fp); // Fecha o arquivo
@@ -121,4 +81,80 @@ int isOK(Process *lp, int tam, int inicio, int duracao)
     return TRUE;
 }
 
+/*
+    A função "readProcessesFromFile" lê os processos do arquivo especificado e armazena na lista de processos.
+    Ela percorre o arquivo linha por linha e, para cada linha, extrai as informações do processo.
+    Se o processo for do tipo REAL TIME, verifica se pode ser executado no instante de início especificado.
+    Caso seja válido, adiciona o processo na lista de processos.
+*/
+void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
+    FILE* fp = fopen(filename, "r"); // Abre o arquivo para leitura
 
+    if (!fp)
+    {
+        puts("Erro ao abrir o arquivo.");
+        exit(1);
+    }
+
+    int inicio = 0; // Variável para armazenar o instante de início do processo
+    int duracao = 0; // Variável para armazenar a duração do processo
+    char policy; // Variável para armazenar a política do processo (I: REAL TIME, A: ROUND ROBIN)
+    char processName[10]; // Nome do processo
+
+    while (fscanf(fp, "%*s <%[^>]> %c=<%d> D=<%d>", processName, &policy, &inicio, &duracao) != EOF)
+    {
+        if (policy == 'I')
+        { // Processo REAL TIME
+            if (isOK(lstProcess, *i, inicio, duracao))
+            {
+                strcpy(lstProcess[*i].name, processName);
+                lstProcess[*i].index = *i;
+                lstProcess[*i].init = inicio;
+                lstProcess[*i].duration = duracao;
+                lstProcess[*i].policy = REAL_TIME;
+                lstProcess[*i].started = FALSE;
+
+                (*i)++;
+            }
+            else
+            {
+                printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
+            }
+
+            policy = 'A';
+            inicio = -1;
+            duracao = 1;
+        }
+        else
+        { // Processo ROUND ROBIN
+            strcpy(lstProcess[*i].name, processName);
+            lstProcess[*i].index = *i;
+            lstProcess[*i].init = -1;
+            lstProcess[*i].duration = 1;
+            lstProcess[*i].policy = ROUND_ROBIN;
+            lstProcess[*i].started = FALSE;
+            (*i)++;
+        }
+        sleep(1);
+    }
+
+    fclose(fp); // Fecha o arquivo
+}
+
+/*
+    A função "executeChildProcess" executa o código do processo filho.
+    Ela lê os processos do arquivo, armazena na lista de processos e realiza as operações necessárias.
+*/
+void executeChildProcess(FILE* fp, Process* lstProcess, int i) {
+    readProcessesFromFile("exec.txt", lstProcess, &i);
+}
+
+/*
+    A função "executeParentProcess" executa o código do processo pai.
+    Ela realiza as operações do processo pai, como aguardar um tempo e executar o escalonador.
+*/
+void executeParentProcess() {
+    sleep(1);
+    char *argv[] = {NULL};
+    execvp("./escalonador", argv); // Executa o escalonador
+}
