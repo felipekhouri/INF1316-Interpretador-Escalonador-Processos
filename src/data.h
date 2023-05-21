@@ -16,7 +16,7 @@ typedef struct process
 {
     char filename[8];      // Processo a ser executado
     int schedulingAlg;    // 0 = RT & 1 = RR
-    int I;    // Inicio do tempo de execução 
+    int I;    // beginning do tempo de execução 
     int index;     
     int D;  
     int started;   
