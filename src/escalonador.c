@@ -165,7 +165,7 @@ void processReceived(Process* processInfo, int index, Queue* rrQueue, Queue* rtQ
 void executeRealTimeProcess(Queue* rtQueue, pid_t* pid) {
     Process p = rtQueue->ahead->process;
     if (!p.started){
-        printf("Preepção REALTIME\n");
+        printf("|Preempção REALTIME|\n");
         executeProcess(p); // Executa o processo pela primeira vez
         sleep(p.D); // Deixa o programa parado pelo tempo do processo
         p.pid = *pid; // Pega o pid do processo
