@@ -11,8 +11,8 @@
 // Protótipo das funções
 
 int isOK(Process *lp, int tam, int beginning, int duration);
-void readProcessesFromFile(const char* filename, Process* lstProcess, int* i);
-void executeChildProcess(FILE* fp, Process* lstProcess, int i);
+void readProcessesFromFile(const char* filename, Process* processCollection, int* i);
+void executeChildProcess(FILE* fp, Process* processCollection, int i);
 void executeParentProcess();
 
 int main(void)
@@ -20,7 +20,7 @@ int main(void)
     int i = 0; // Índice do processo
     char filename[] = "exec.txt"; // Nome do arquivo de entrada
     size_t segmento; // ID da memória compartilhada
-    Process *lstProcess; // Ponteiro para a lista de processos
+    Process *processCollection; // Ponteiro para a lista de processos
 
     segmento = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
     if (segmento == -1)
@@ -28,7 +28,7 @@ int main(void)
         perror("Erro ao alocar memória compartilhada");
         exit(1);
     }
-    lstProcess = shmat(segmento, 0, 0);
+    processCollection = shmat(segmento, 0, 0);
 
     FILE *fp = fopen(filename, "r"); // Abre o arquivo para leitura
 
@@ -41,7 +41,7 @@ int main(void)
     pid_t pid = fork();
     if (pid == 0)
     { // Processo filho
-        executeChildProcess(fp, lstProcess, i);
+        executeChildProcess(fp, processCollection, i);
     }
     else if (pid > 0)
     { // Processo pai
@@ -88,7 +88,7 @@ int isOK(Process *lp, int tam, int beginning, int duration)
     Se o processo for do tipo REAL TIME, verifica se pode ser executado no instante de início especificado.
     Caso seja válido, adiciona o processo na lista de processos.
 */
-void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
+void readProcessesFromFile(const char* filename, Process* processCollection, int* i) {
     FILE* fp = fopen(filename, "r"); // Abre o arquivo para leitura
 
     if (!fp)
@@ -120,7 +120,7 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
 
         if (schedulingAlg == 'T')
         { // Processo REAL TIME
-            if (isOK(lstProcess, *i, beginning, duration))
+            if (isOK(processCollection, *i, beginning, duration))
             {
                 Process realTimeProcess;
                 strcpy(realTimeProcess.filename, processName);
@@ -130,7 +130,7 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
                 realTimeProcess.schedulingAlg = REAL_TIME;
                 realTimeProcess.started = FALSE;
 
-                lstProcess[*i] = realTimeProcess;
+                processCollection[*i] = realTimeProcess;
 
                 (*i)++;
             }
@@ -153,7 +153,7 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
             roundRobinProcess.schedulingAlg = ROUND_ROBIN;
             roundRobinProcess.started = FALSE;
 
-            lstProcess[*i] = roundRobinProcess;
+            processCollection[*i] = roundRobinProcess;
 
             (*i)++;
         }
@@ -168,8 +168,8 @@ void readProcessesFromFile(const char* filename, Process* lstProcess, int* i) {
     A função "executeChildProcess" executa o código do processo filho.
     Ela lê os processos do arquivo, armazena na lista de processos e realiza as operações necessárias.
 */
-void executeChildProcess(FILE* fp, Process* lstProcess, int i) {
-    readProcessesFromFile("exec.txt", lstProcess, &i);
+void executeChildProcess(FILE* fp, Process* processCollection, int i) {
+    readProcessesFromFile("exec.txt", processCollection, &i);
 }
 
 /*
