@@ -11,9 +11,10 @@
 // Protótipo das funções
 
 void readProcessesFromFile(const char* filename, Process* processCollection, int* i);
-int isProcessReady(Process *lp, int size, int beginning, int duration);
 void executeChildProcess(FILE* fp, Process* processCollection, int i);
 void executeParentProcess();
+int isRealTimeConflict(Process *lp, int size, int beginning, int duration);
+
 
 int main(void)
 {
@@ -22,7 +23,7 @@ int main(void)
     size_t segmentIdentifier; // ID da memória compartilhada
     Process *processCollection; // Ponteiro para a lista de processos
 
-    segmentIdentifier = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
+    segmentIdentifier = shmget(SHM_KEY, TOTALPROCESSES * sizeof(Process), IPC_CREAT | 0666);
     if (segmentIdentifier == -1)
     {
         perror("Erro ao alocar memória compartilhada");
@@ -53,34 +54,37 @@ int main(void)
 }
 
 /*
-    A função "isProcessReady" verifica se um novo processo pode ser executado no instante de início especificado.
+    A função "isRealTimeConflict" verifica se um novo processo pode ser executado no instante de início especificado.
     Ela percorre a lista de processos já existentes e verifica se há conflito de tempo.
     Se houver algum processo em execução no intervalo [beginning, beginning + duration] ou se o tempo de execução ultrapassar 60 segundos,
     retorna FALSE, indicando que o processo não pode ser executado.
     Caso contrário, retorna TRUE, indicando que o processo pode ser executado.
 */
-int isProcessReady(Process *lp, int size, int beginning, int duration)
+int isRealTimeConflict(Process *lp, int size, int beginning, int duration)
 {
     for (int i = 0; i < size; i++)
     {
-        if ((beginning >= lp[i].I) && (beginning <= (lp[i].I + lp[i].D)))
+        int processEnd = lp[i].I + lp[i].D;
+
+        if (beginning >= lp[i].I && beginning <= processEnd)
         {
             return FALSE;
         }
 
-        if (((beginning + duration) >= lp[i].I) && ((beginning + duration) <= (lp[i].I + lp[i].D)))
+        if (beginning + duration >= lp[i].I && beginning + duration <= processEnd)
         {
             return FALSE;
         }
     }
 
-    if ((beginning + duration) > 60)
+    if (beginning + duration > 60)
     {
         return FALSE;
     }
 
     return TRUE;
 }
+
 
 /*
     A função "readProcessesFromFile" lê os processos do arquivo especificado e armazena na lista de processos.
@@ -120,7 +124,7 @@ void readProcessesFromFile(const char* filename, Process* processCollection, int
 
         if (schedulingAlg == 'T')
         { // Processo REAL TIME
-            if (isProcessReady(processCollection, *i, beginning, duration))
+            if (isRealTimeConflict(processCollection, *i, beginning, duration))
             {
                 Process realTimeProcess;
                 strcpy(realTimeProcess.filename, processName);

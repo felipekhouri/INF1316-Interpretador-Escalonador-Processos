@@ -32,7 +32,7 @@ int main(void){
     float sec; // Variável para armazenar os segundos
 
     // Anexar memória compartilhada
-    shared_memory = shmget(SHM_KEY, MAX_PROCESSOS * sizeof(Process), IPC_CREAT | 0666);
+    shared_memory = shmget(SHM_KEY, TOTALPROCESSES * sizeof(Process), IPC_CREAT | 0666);
     processInfo = (Process *)shmat(shared_memory, 0, 0);
     if (!processInfo){
         perror("Erro ao anexar à memória compartilhada do processInfo.\n");
@@ -119,7 +119,7 @@ void executeProcess(Process p){
 
 /*
     Função que processa um processo recebido.
-    Ela adiciona o processo na fila apropriada (Round Robin ou Real Time) com base em sua política.
+    Ela adiciona o processo na fila apropriada (Round Robin ou Real Time) com base em seu algoritmo de escalonamento.
 */
 void processReceived(Process* processInfo, int index, Queue* roundRobinQueue, Queue* realTimeQueue, pid_t* pid) {
     Process currentP = processInfo[index];
