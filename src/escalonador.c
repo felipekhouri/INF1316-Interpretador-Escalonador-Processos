@@ -59,7 +59,7 @@ int main(void){
 
     while (!shouldTerminate){
         gettimeofday(&end, NULL); // Obtém o tempo atual
-        sec = ((end.tv_sec - init.tv_sec) % 60); // Calcula os segundos decorridos
+        sec = ((end.tv_sec - init.tv_sec)); // Calcula os segundos decorridos
         printf("\n================================\nT: %.1fs\n", sec);
         
         if (processInfo[i].index == i){
@@ -69,7 +69,7 @@ int main(void){
 
         /* Inicia a execução dos processos */ 
         /* Processo do Real Time */
-        if ((!isQueueEmpty(&realTimeQueue)) && (realTimeQueue.ahead->process.I == sec)){
+        if ((!isQueueEmpty(&realTimeQueue)) && (realTimeQueue.ahead->process.I == (int)sec%60)){
             executeRealTimeProcess(&realTimeQueue, pid);
         }
         /* Processo do Round Robin */
@@ -154,6 +154,7 @@ void executeRealTimeProcess(Queue* realTimeQueue, pid_t* pid) {
         p.started = 1; // Indica que o processo começou
     }
     else{
+        printf("|Preempção REALTIME|\n");
         kill(p.pid, SIGCONT); // Continua o processo já executado uma vez
         sleep(p.D); // Deixa o programa parado pelo tempo do processo
     }
