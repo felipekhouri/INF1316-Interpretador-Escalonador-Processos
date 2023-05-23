@@ -6,7 +6,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
-#include "data.h"
+#include "process.h"
+#include "queue.h"
+#include "node.h"
 
 // Protótipo das funções
 

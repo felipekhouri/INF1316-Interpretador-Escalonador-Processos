@@ -8,8 +8,9 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
-
-#include "data.h"
+#include "node.h"
+#include "queue.h"
+#include "process.h"
 
 // Protótipos das funções
 
@@ -49,10 +50,10 @@ int main(void){
 
     Queue roundRobinQueue; // Fila para políticas Round Robin
     Queue realTimeQueue; // Fila para políticas Real Time
-    Queue ioQueue; // Fila para políticas I/O Bound
+    Queue ioBoundQueue; // Fila para políticas I/O Bound
     initQueue(&roundRobinQueue); // Inicializa a fila Round Robin
     initQueue(&realTimeQueue); // Inicializa a fila Real Time
-    initQueue(&ioQueue); // Inicializa a fila I/O Bound
+    initQueue(&ioBoundQueue); // Inicializa a fila I/O Bound
     signal(SIGINT, handleSignal); // Configura o tratador de sinal para SIGINT (Ctrl+C)
     gettimeofday(&init, NULL); // Obtém o tempo de início
 
@@ -75,6 +76,7 @@ int main(void){
         else if (!isQueueEmpty(&roundRobinQueue)){
             executeRoundRobinProcess(&roundRobinQueue, pid);
         }
+
     }
 
     /* Libera a memória compartilhada */ 
@@ -132,6 +134,8 @@ void processReceived(Process* processInfo, int index, Queue* roundRobinQueue, Qu
         enqueue(roundRobinQueue, currentP); // Adiciona o processo na fila Round Robin
         queueSort(roundRobinQueue); // Ordena a fila Round Robin com base na prioridade
     }
+
+
 }
 
 /*
