@@ -10,17 +10,7 @@
 #define TOTALPROCESSES 20
 
 
-typedef struct node
-{
-    Process process;
-    struct node *next;
-} Node;
 
-typedef struct queue
-{
-    Node *ahead;
-    Node *behind;
-} Queue;
 
 typedef struct process
 {
@@ -33,6 +23,17 @@ typedef struct process
     pid_t pid;
 } Process;
 
+typedef struct node
+{
+    Process process;
+    struct node *next;
+} Node;
+
+typedef struct queue
+{
+    Node *ahead;
+    Node *behind;
+} Queue;
 
 void initQueue(Queue *q);
 int isQueueEmpty(Queue *q);
