@@ -62,28 +62,21 @@ int main(void)
 */
 int isRealTimeNotConflicting(Process *lp, int size, int beginning, int duration)
 {
-    for (int i = 0; i < size; i++)
-    {
-        int processEnd = lp[i].I + lp[i].D;
-
-        if (beginning >= lp[i].I && beginning <= processEnd)
-        {
-            return FALSE;
-        }
-
-        if (beginning + duration >= lp[i].I && beginning + duration <= processEnd)
-        {
-            return FALSE;
-        }
+    if (size == 0) {
+        return TRUE;
     }
 
-    if (beginning + duration > 60)
+    int lastProcessIndex = size - 1;
+    int lastProcessEnd = lp[lastProcessIndex].I + lp[lastProcessIndex].D;
+
+    if (beginning < lastProcessEnd || beginning + duration > 60)
     {
         return FALSE;
     }
 
     return TRUE;
 }
+
 
 
 /*

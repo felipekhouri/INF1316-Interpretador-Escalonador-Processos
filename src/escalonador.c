@@ -17,6 +17,7 @@ void executeProcess(Process currentP);
 void processReceived(Process* processInfo, int index, Queue* roundRobinQueue, Queue* realTimeQueue, pid_t* pid);
 void executeRealTimeProcess(Queue* realTimeQueue, pid_t* pid);
 void executeRoundRobinProcess(Queue* roundRobinQueue, pid_t* pid);
+int isRealTimeConflict(Queue* realTimeQueue, Process newProcess);
 
 // Variáveis globais
 int shouldTerminate = 0;
@@ -93,6 +94,20 @@ void handleSignal(int sig) {
     shouldTerminate = 1;
 }
 
+int isRealTimeConflict(Queue* realTimeQueue, Process newProcess){
+    Node* temp = realTimeQueue->ahead;
+
+    // Varre todos os processos na fila
+    while(temp != NULL) {
+        // Checa se o período de execução do novo processo se sobrepõe ao do processo atual
+        if(!(newProcess.I >= temp->process.I + temp->process.D || newProcess.I + newProcess.D <= temp->process.I)) {
+            return TRUE;  // Retorna 1 (verdadeiro) se há conflito
+        }
+        temp = temp->next;
+    }
+    return FALSE; // Retorna 0 (falso) se não há conflito
+}
+
 
 /*
     A função "executeProcess" recebe um objeto Processo e executa o programa associado a ele.
@@ -125,15 +140,18 @@ void processReceived(Process* processInfo, int index, Queue* roundRobinQueue, Qu
     Process currentP = processInfo[index];
 
     if (currentP.schedulingAlg == REAL_TIME){
-        enqueue(realTimeQueue, currentP); // Adiciona o processo na fila Real Time
-        queueSort(realTimeQueue); // Ordena a fila Real Time com base na prioridade
+        // Verifica se há conflito com os processos Real Time existentes
+        if(!isRealTimeConflict(realTimeQueue, currentP)) {
+            enqueue(realTimeQueue, currentP); // Adiciona o processo na fila Real Time
+            queueSort(realTimeQueue); // Ordena a fila Real Time com base na prioridade
+        } else {
+            printf("Conflito detectado com o processo de Real Time: %s\n", currentP.filename);
+        }
     }
     else if (currentP.schedulingAlg == ROUND_ROBIN){
         enqueue(roundRobinQueue, currentP); // Adiciona o processo na fila Round Robin
         queueSort(roundRobinQueue); // Ordena a fila Round Robin com base na prioridade
     }
-
-
 }
 
 /*
