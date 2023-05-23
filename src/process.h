@@ -9,7 +9,6 @@
 #define ROUND_ROBIN 1
 #define TOTALPROCESSES 20
 
-
 typedef struct process
 {
     char filename[8];      // Processo a ser executado
@@ -20,28 +19,3 @@ typedef struct process
     int started;   
     pid_t pid;
 } Process;
-
-typedef struct node
-{
-    Process process;
-    struct node *next;
-} Node;
-
-
-
-typedef struct queue
-{
-    Node *ahead;
-    Node *behind;
-} Queue;
-
-
-void initQueue(Queue *q);
-int isQueueEmpty(Queue *q);
-void enqueue(Queue *q, Process p);
-void dequeue(Queue *q);
-Node* merge(Node* left, Node* right);
-void split(Node* source, Node** frontRef, Node** backRef);
-void mergeSort(Node** headRef);
-void printQueue(Queue *q);
-void queueSort(Queue *q);

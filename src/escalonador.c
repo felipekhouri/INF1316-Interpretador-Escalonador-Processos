@@ -8,7 +8,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include "process.h"
+#include "queue.h"
 
 // Protótipos das funções
 
