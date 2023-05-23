@@ -140,10 +140,10 @@ void readProcessesFromFile(const char* filename, Process* processCollection, int
             }
             else
             {
-                printf("Processo: (%s) inválido. Tempo de execução excede o limite permitido.\n", processName);
+                printf("Processo: (%s) inválido. Tempo de execução excede o permitido.\n", processName);
             }
 
-            schedulingAlg = 'A';
+            schedulingAlg = 'R';
             beginning = -1;
             duration = 1;
         }
