@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "queue.h"
-#include "node.h"
 
 #define SHM_KEY 1000
 #define SHM_KEY2 7000
@@ -12,7 +10,6 @@
 #define TOTALPROCESSES 20
 
 
-
 typedef struct process
 {
     char filename[8];      // Processo a ser executado
@@ -21,6 +18,30 @@ typedef struct process
     int index;     
     int D;  // duração do tempo de execução
     int started;   
-    int isIoBound; 
     pid_t pid;
 } Process;
+
+typedef struct node
+{
+    Process process;
+    struct node *next;
+} Node;
+
+
+
+typedef struct queue
+{
+    Node *ahead;
+    Node *behind;
+} Queue;
+
+
+void initQueue(Queue *q);
+int isQueueEmpty(Queue *q);
+void enqueue(Queue *q, Process p);
+void dequeue(Queue *q);
+Node* merge(Node* left, Node* right);
+void split(Node* source, Node** frontRef, Node** backRef);
+void mergeSort(Node** headRef);
+void printQueue(Queue *q);
+void queueSort(Queue *q);

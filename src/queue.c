@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "process.h"
-#include "queue.h"
 
 void initQueue(Queue *q)
 {
