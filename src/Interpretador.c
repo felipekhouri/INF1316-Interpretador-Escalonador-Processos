@@ -13,7 +13,7 @@
 void readProcessesFromFile(const char* filename, Process* processCollection, int* i);
 void executeChildProcess(FILE* fp, Process* processCollection, int i);
 void executeParentProcess();
-int isRealTimeConflict(Process *lp, int size, int beginning, int duration);
+int isRealTimeNotConflicting(Process *lp, int size, int beginning, int duration);
 
 
 int main(void)
@@ -54,13 +54,13 @@ int main(void)
 }
 
 /*
-    A função "isRealTimeConflict" verifica se um novo processo pode ser executado no instante de início especificado.
+    A função "isRealTimeNotConflicting" verifica se um novo processo pode ser executado no instante de início especificado.
     Ela percorre a lista de processos já existentes e verifica se há conflito de tempo.
     Se houver algum processo em execução no intervalo [beginning, beginning + duration] ou se o tempo de execução ultrapassar 60 segundos,
     retorna FALSE, indicando que o processo não pode ser executado.
     Caso contrário, retorna TRUE, indicando que o processo pode ser executado.
 */
-int isRealTimeConflict(Process *lp, int size, int beginning, int duration)
+int isRealTimeNotConflicting(Process *lp, int size, int beginning, int duration)
 {
     for (int i = 0; i < size; i++)
     {
@@ -124,7 +124,7 @@ void readProcessesFromFile(const char* filename, Process* processCollection, int
 
         if (schedulingAlg == 'T')
         { // Processo REAL TIME
-            if (isRealTimeConflict(processCollection, *i, beginning, duration))
+            if (isRealTimeNotConflicting(processCollection, *i, beginning, duration))
             {
                 Process realTimeProcess;
                 strcpy(realTimeProcess.filename, processName);
